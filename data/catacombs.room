@@ -1,0 +1,26 @@
+(define-room 
+  #:name "Catacombs"
+  #:description ""
+  #:floors '(basement)
+  #:doors '(north south)
+  #:floorplan 
+  '("..#...#.."
+    "..#...#.."
+    "###...###"
+    "..#......"
+    "..######."
+    "..######."
+    "########."
+    "........."
+    ".........")
+  #:tiles 
+  (list (define-tile
+          #:tile #\.
+          #:name "floor"
+          #:description "a simple stone floor"
+          #:walkable #t)
+        (define-tile
+          #:tile #\#
+          #:name "wall"
+          #:description "a simple stone wall"
+          #:walkable #f)))

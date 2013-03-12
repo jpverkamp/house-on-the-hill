@@ -1,0 +1,40 @@
+(define-room 
+  #:name "Chasm"
+  #:description ""
+  #:floors '(basement)
+  #:doors '(west east)
+  #:floorplan 
+  '("         "
+    "         "
+    "         "
+    "||| |||||"
+    "|||||| ||"
+    "|||||||||"
+    "         "
+    "         "
+    "         ")
+  #:tiles
+  (list (define-tile
+          #:tile #\space
+          #:name "empty space"
+          #:description "a seemingly endless drop into darkness"
+          #:walkable #t
+          #:onWalk 
+          (lambda (player tile)
+            (and (.ask "Are you sure you want to step into the empty space?")
+                 (.kill player "You fall screaming into the abyss."))))
+        (define-tile
+          #:tile #\|
+          #:name "rickety bridge"
+          #:description "half rotten planks of wood; they look like they might break at any moment"
+          #:walkable #t
+          #:onWalk
+          (lambda (player tile)
+            (.set tile (+ 1 (.get tile 'steps 0)))
+            (define steps (.get tile 'steps 0))
+            (cond
+              [(and (>= steps 5) (> (random) 0.5))
+               (.kill player "The step beneath you gives way, plunging you into the endless abyss.")]
+              [(or (= steps 2)
+                   (and (> steps 2) (> (random) 0.5)))
+               (.say "The step beneath you creaks, threatening to give way at any moment.")])))))
