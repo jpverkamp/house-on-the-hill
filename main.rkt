@@ -19,27 +19,28 @@
      (printf "loading ~a\n" path)
      (load path)]))
 
+; function to take a single step in the simulation (on key presses)
+(define (step key-event)
+  (define code (send key-event get-key-code))
+  (unless (or (eq? code 'release)
+              (eq? code 'menu))
+    (clear gui 0 12 40 1 "black")
+    (draw-centered-string gui 12 (format " you pressed ~a " code))
+    (flip gui)))
+
 ; create the main gui
-(define gui (create-gui "The House on the Hill" 40 24 20))
-(clear gui)
-(for* ([x (in-range 40)]
-       [y (in-range 24)])
-  (draw-tile gui x y (string-ref (number->string (remainder (+ x y) 10)) 0)))
-(draw-centered-string gui 10 " The House on the Hill ")
+(define gui (create-gui "The House on the Hill" 40 24 20 step))
+
+(draw-centered-string gui 10 "The House on the Hill")
+(draw-centered-string gui 12 "Press any key to begin")
+
+;(clear gui "black")
+;(draw-centered-string gui 8 "----===----" "brown")
+;(for ([y (in-range 9 18)])
+;  (draw-centered-string gui y "..........." "green"))
+;(draw-tile gui 19 12 #\@ "white")
+
+;(draw-centered-string gui 19 "The House on the Hill lies ahead." "white")
+;(draw-centered-string gui 20 "Good luck." "white")
+
 (flip gui)
-
-; main game thread
-(thread
- (lambda ()
-   (let loop ()
-     (draw-tile gui (random 40) (random 24) (integer->char (+ 65 (random 26))))
-     (sleep 0.1)
-     (loop))))
-
-; refresh thread
-(thread
- (lambda ()
-   (let loop ()
-     (flip gui)
-     (sleep (/ 1 30))
-     (loop))))

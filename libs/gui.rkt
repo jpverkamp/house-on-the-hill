@@ -27,11 +27,18 @@
    canvas
    buffer
    buffer-dc
+   key-listener
    dirty)
   #:mutable)
 
 ; create a new gui
-(define (create-gui title tiles-wide tiles-high [tile-size 12])
+(define (create-gui 
+         title
+         tiles-wide
+         tiles-high
+         [tile-size 12]
+         [key-listener #f])
+
   ; get the screen metrics
   (define target-width (* tile-size tiles-wide))
   (define target-height (* tile-size tiles-high))
@@ -43,8 +50,28 @@
          [width target-width]
          [height target-height]
          [style '(no-resize-border)]))
-
+  
   ; the element we actually care about
+  (define game-canvas%
+    (class canvas%
+      (inherit get-width get-height refresh)
+      
+      (define/override (on-char key-event)
+        (when (gui-key-listener my-gui)
+          ((gui-key-listener my-gui) key-event)))
+      
+      (define/private (my-paint-callback self dc)
+        (send dc draw-bitmap (gui-buffer my-gui) 0 0))
+      
+      (super-new (paint-callback (lambda (c dc) (my-paint-callback c dc))))))
+  
+  (define canvas
+    (new game-canvas%
+         [parent frame]
+         [min-width target-width]
+         [min-height target-height]))
+
+    #|
   (define canvas
     (new canvas% 
          [parent frame]
@@ -53,7 +80,8 @@
          [paint-callback
           (lambda (canvas dc)
             (send dc draw-bitmap (gui-buffer my-gui) 0 0))]))
-  
+|#  
+
   ; resize the container to actually fit the interface
   ; stupid title bar...
   (send frame show #t)
@@ -63,8 +91,20 @@
   (define buffer-dc (new bitmap-dc% [bitmap buffer]))
   
   ; clear and return the gui
-  (define my-gui (gui tile-size tiles-wide tiles-high frame canvas buffer buffer-dc #t))
+  (define my-gui 
+    (gui tile-size 
+         tiles-wide
+         tiles-high 
+         frame 
+         canvas 
+         buffer 
+         buffer-dc 
+         key-listener
+         #t))
+  
   (clear my-gui "black")
+  (flip my-gui)
+  
   my-gui)
 
 ; flip the buffer
@@ -80,17 +120,17 @@
      (clear gui 0 0 (gui-tiles-wide gui) (gui-tiles-high gui) "black")]
     [(gui bg)
      (clear gui 0 0 (gui-tiles-wide gui) (gui-tiles-high gui) bg)]
-    [(gui top left width height)
-     (clear gui top left width height "black")]
-    [(gui top left width height bg)
+    [(gui x y width height)
+     (clear gui x y width height "black")]
+    [(gui x y width height bg)
      (set-gui-dirty! gui #t)
      (define dc (gui-buffer-dc gui))
      (define tile-size (gui-tile-size gui))
      
-     (send dc set-background bg)
+     (send dc set-brush (new brush% [color bg]))
      (send dc draw-rectangle
-           (* tile-size left)
-           (* tile-size top)
+           (* tile-size x)
+           (* tile-size y)
            (* tile-size width)
            (* tile-size height))]))
 
