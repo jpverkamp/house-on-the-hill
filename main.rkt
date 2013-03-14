@@ -39,17 +39,3 @@
    [tiles-high 24]
    [tile-size 20]
    [key-listener step]))
-
-(send gui draw-centered-string 10 "The House on the Hill")
-(send gui draw-centered-string 12 "Press any key to begin")
-
-;(clear gui "black")
-;(draw-centered-string gui 8 "----===----" "brown")
-;(for ([y (in-range 9 18)])
-;  (draw-centered-string gui y "..........." "green"))
-;(draw-tile gui 19 12 #\@ "white")
-
-;(draw-centered-string gui 19 "The House on the Hill lies ahead." "white")
-;(draw-centered-string gui 20 "Good luck." "white")
-
-(send gui flip)
