@@ -11,11 +11,12 @@
 ; store information about tiles
 ; 
 ; required fields:
-; the name for the room displayed to the room
-; the default tile to display to the player
+; name - the name for the room displayed to the player
+; tile - the tile used in floorplans and the default tile to display
 ; 
 ; optional fields:
 ; description - the description sent to the player on inspection (default = "")
+; default-tile - the tile to use when the room is oriented normally (default = tile)
 ; rotated-tile - the tile to use when the room is rotated 90 degrees (default = tile)
 ; foreground - the foreground color (default = "white")
 ; background - the background color (default = "black")
@@ -31,6 +32,7 @@
     ; optional fields
     (init-field
      [description ""]
+     [default-tile tile]
      [rotated-tile tile]
      [foreground "white"]
      [background "black"]
@@ -45,12 +47,14 @@
     
     ; various helper methods
     (define/public (get-tile [rotated #f])
-      (if rotated rotated-tile tile))
+      (if rotated rotated-tile default-tile))
     (define/public (walkable?) walkable)
     
     ; fix the tiles if they were given as a string
     (when (string? tile)
       (set! tile (string-ref tile 0)))
+    (when (string? default-tile)
+      (set! tile (string-ref default-tile 0)))
     (when (string? rotated-tile)
       (set! tile (string-ref rotated-tile 0)))
     
