@@ -35,7 +35,7 @@
 (define gui 
   (make-gui
    [title "The House on the Hill"]
-   [tiles-wide 40]
-   [tiles-high 24]
-   [tile-size 20]
+   [tiles-wide 60]
+   [tiles-high 36]
+   [tile-size 14]
    [key-listener step]))
