@@ -26,6 +26,7 @@
      [tile "|"]
      [rotated-tile "-"]
      [name "rickety bridge"]
+     [foreground "brown"]
      [description "half rotten planks of wood; they look like they might break at any moment"]
      [on-walk
       (lambda (player tile)

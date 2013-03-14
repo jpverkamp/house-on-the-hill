@@ -66,7 +66,12 @@
     
     ; convert the tiles to a hashmap if it isn't already
     (when (not (hash? tiles))
-      (set! tiles (make-hasheq (map (lambda (tile) (cons (send tile get-tile) tile)) tiles))))
+      (set! tiles (make-hasheq 
+                   (map (lambda (tile) 
+                          (cons (send tile get-tile-key) tile)) 
+                        tiles))))
+    
+    (printf "tiles has keys: ~s\n" (hash-keys tiles))
     
     ; this has to be here
     (super-new)))

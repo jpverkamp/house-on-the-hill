@@ -46,6 +46,7 @@
     (define/public (get-background) background)
     
     ; various helper methods
+    (define/public (get-tile-key) tile)
     (define/public (get-tile [rotated #f])
       (if rotated rotated-tile default-tile))
     (define/public (walkable?) walkable)
@@ -54,9 +55,9 @@
     (when (string? tile)
       (set! tile (string-ref tile 0)))
     (when (string? default-tile)
-      (set! tile (string-ref default-tile 0)))
+      (set! default-tile (string-ref default-tile 0)))
     (when (string? rotated-tile)
-      (set! tile (string-ref rotated-tile 0)))
+      (set! rotated-tile (string-ref rotated-tile 0)))
     
     ; this has to be here
     (super-new)))

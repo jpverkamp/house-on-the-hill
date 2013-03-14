@@ -21,6 +21,10 @@
      tiles-high
      tile-size)
     
+    ; simple accessor
+    (define/public (get-tiles-wide) tiles-wide)
+    (define/public (get-tiles-high) tiles-high)
+    
     ; the font to use to draw the tileset
     (define font
       (make-font 
