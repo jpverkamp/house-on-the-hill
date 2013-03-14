@@ -27,15 +27,21 @@
   (define code (send key-event get-key-code))
   (unless (or (eq? code 'release)
               (eq? code 'menu))
-    (clear gui 0 12 40 1 "black")
-    (draw-centered-string gui 12 (format " you pressed ~a " code))
-    (flip gui)))
+    (send gui clear 0 12 40 1 "black")
+    (send gui draw-centered-string 12 (format " you pressed ~a " code))
+    (send gui flip)))
 
 ; create the main gui
-(define gui (create-gui "The House on the Hill" 40 24 20 step))
+(define gui 
+  (make-gui
+   [title "The House on the Hill"]
+   [tiles-wide 40]
+   [tiles-high 24]
+   [tile-size 20]
+   [key-listener step]))
 
-(draw-centered-string gui 10 "The House on the Hill")
-(draw-centered-string gui 12 "Press any key to begin")
+(send gui draw-centered-string 10 "The House on the Hill")
+(send gui draw-centered-string 12 "Press any key to begin")
 
 ;(clear gui "black")
 ;(draw-centered-string gui 8 "----===----" "brown")
@@ -46,4 +52,4 @@
 ;(draw-centered-string gui 19 "The House on the Hill lies ahead." "white")
 ;(draw-centered-string gui 20 "Good luck." "white")
 
-(flip gui)
+(send gui flip)
