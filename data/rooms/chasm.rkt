@@ -24,6 +24,7 @@
            (send player die "You fall screaming into the abyss.")))])
    (define-tile
      [tile "|"]
+     [rotated-tile "-"]
      [name "rickety bridge"]
      [description "half rotten planks of wood; they look like they might break at any moment"]
      [on-walk
