@@ -81,10 +81,6 @@
     ; add the initial room
     (hash-set! rooms '(ground  0  0) (get-room 'outside))
     
-    ; DEBUG
-    (hash-set! rooms '(ground  0 -1) (get-room 'catacombs))
-    (hash-set! rooms '(ground -1 -1) (get-room 'chasm))
-    
     ; handle key presses
     (define/override (update key-event)
       ; allow bailing out early
@@ -110,18 +106,40 @@
                     (= player-in-room-y new-player-in-room-y))
            (return this))
          
-         ; check that it's walkable
-         ; TODO: borders
-         (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
-         (define tile (send room get-tile 
-                            (+ 4 new-player-in-room-x)
-                            (+ 4 new-player-in-room-y)))
-         (unless (send tile walkable?)
-           (printf "not walkable\n")
-           (return this))
-         
-         ; trigger on-walk events
-         (send tile do-walk player tile)
+         ; check if we're in a border
+         (cond 
+           ; border
+           [(or (= 5 (abs new-player-in-room-x))
+                (= 5 (abs new-player-in-room-y)))
+            (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
+            (unless (or (and (<= -1 new-player-in-room-x 1)
+                             (= 5 new-player-in-room-y)
+                             (send room has-door? 'north))
+                        (and (<= -1 new-player-in-room-x 1)
+                             (= -5 new-player-in-room-y)
+                             (send room has-door? 'south))
+                        (and (<= -1 new-player-in-room-y 1)
+                             (= 5 new-player-in-room-x)
+                             (send room has-door? 'west))
+                        (and (<= -1 new-player-in-room-y 1)
+                             (= -5 new-player-in-room-x)
+                             (send room has-door? 'east)))
+              (return this))]
+           ; not a border
+           [else
+            ; check that it's walkable
+            (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
+            (define tile (send room get-tile 
+                               (+ (- new-player-in-room-x) 4)
+                               (+ (- new-player-in-room-y) 4)))
+            (unless (send tile walkable?)
+              (return this))
+            
+            ; trigger on-walk events
+            (unless (send tile do-walk player tile)
+              (return (if (send player dead?)
+                          (new loss-screen%)
+                          this)))])
          
          ; update the player position
          (set! player-in-room-x new-player-in-room-x)
@@ -141,6 +159,17 @@
            [(> player-in-room-y 4)
             (set! player-in-room-y -5)
             (--! player-room-y)])
+         
+         ; generate a new room if necessary
+         (unless (hash-ref rooms (list player-floor player-room-x player-room-y) #f)
+           ; TODO: generate this
+           (define new-room (get-room 'catacombs))
+           
+           
+           ; add the new room to the map
+           (hash-set! rooms 
+                      (list player-floor player-room-x player-room-y)
+                      new-room))
          
          ; return this screen again
          (if (send player dead?)
@@ -163,8 +192,8 @@
         ; check if we've already drawn this room
         (unless (hash-ref drawn-rooms (list room-x room-y) #f)
           ; make sure that we're still on the screen
-          (when (and (<= 0 screen-x wide)
-                     (<= 0 screen-y high))
+          (when (and (<= -10 screen-x (+ wide 10))
+                     (<= -10 screen-y (+ high 10)))
             ; get the room we're trying to draw
             (define room (hash-ref rooms (list player-floor room-x room-y) #f))
             (when room

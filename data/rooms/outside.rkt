@@ -1,6 +1,7 @@
 (define (border-warning player tile)
   (when (send player ask "Are you sure you want to leave?")
-    (send player die "Too bad. You lose.")))
+    (send player die "Too bad. You lose."))
+  #f)
 
 (define-room
   [name "outside"]
