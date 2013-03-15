@@ -46,32 +46,44 @@
     ; hash of (floor x y) => room
     (define rooms (make-hash))
     
-    ; player position
+    ; --- player position ---
     (define player-floor 'ground)
-    (define player-x 0)
-    (define player-y 0)
+    
+    ; which room the player is in (start at 0x0)
+    (define player-room-x 0)
+    (define player-room-y 0)
+    
+    ; which block the player is at within the room
+    ; the blocks within the room range from -4 to +4
+    ; the walls around each room are at -5 and +5
+    (define player-in-room-x 0)
+    (define player-in-room-y 0)
     
     ; add the initial room
     (hash-set! rooms '(ground  0  0) (get-room 'outside))
+    
+    ; DEBUG
     (hash-set! rooms '(ground  0 -1) (get-room 'catacombs))
     (hash-set! rooms '(ground -1 -1) (get-room 'chasm))
     
+    ; handle key presses
     (define/override (update key-event)
       (case (send key-event get-key-code)
         [(up #\w) 
          (printf "move north\n")
-         (set! player-y (add1 player-y))]
+         (set! player-in-room-y (add1 player-in-room-y))]
         [(down #\s)
          (printf "move south\n")
-         (set! player-y (sub1 player-y))]
+         (set! player-in-room-y (sub1 player-in-room-y))]
         [(left #\a)
          (printf "move west\n")
-         (set! player-x (add1 player-x))]
+         (set! player-in-room-x (add1 player-in-room-x))]
         [(right #\d)
          (printf "move east\n")
-         (set! player-x (sub1 player-x))])
+         (set! player-in-room-x (sub1 player-in-room-x))])
       this)
     
+    ; draw the current world
     (define/override (draw canvas)
       (send canvas clear)
       
@@ -79,49 +91,73 @@
       (define wide (send canvas get-tiles-wide))
       (define high (send canvas get-tiles-high))
       
-      ; special rounding function
-      (define (div10 x) (inexact->exact (floor (/ x 10))))
-
-      ; --- draw the rooms ---
-      (for* ([xi (in-range wide)]
-             [yi (in-range high)])
+      ; 
+      
+      ; function to draw a single room
+      ; screen-x/y - screen coordinates of the center of the room
+      ; room-x/y - room coordinates for the room to draw
+      (define drawn-rooms (make-hash))
+      (define (draw-room screen-x screen-y room-x room-y)
+        (printf "drawing (~a, ~a)\n" room-x room-y)
         
-        ; get the offset
-        (define x (- xi player-x (quotient wide 2) -4))
-        (define y (- yi player-y (quotient high 2) -4))
-
-        ; draw the tile
-        (cond
-          ; draw walls between rooms
-          [(or (= 9 (modulo x 10))
-               (= 9 (modulo y 10)))
-           (send canvas draw-tile xi yi #\space "white" "white")
-           
-           ; --- check for doors ---
-           
-           ; south
-           (for ([x/y (in-list (list x x y y))]
-                 [xd (in-list '(0 0 -5 5))]
-                 [yd (in-list '(-5 5 0 0))]
-                 [dir (in-list '(north south west east))])
-             (cond 
-               [(and (<= 3 x/y 5)
-                     (hash-ref rooms (list player-floor 
-                                           (div10 (- x xd))
-                                           (div10 (- y yd))) 
-                               #f))
-                => (lambda (room)
-                     (when (send room has-door? dir)
-                       (send canvas draw-tile xi yi #\= "white" "brown")))]))]
-          
-          ; otherwise, get the room
-          [(hash-ref rooms (list player-floor (div10 x) (div10 y)) #f)
-           => (lambda (room)
-                (define tile (send room get-tile (modulo x 10) (modulo y 10)))
-                (send canvas draw-tile xi yi
-                      (send tile get-tile)
+        ; check if we've already drawn this room
+        (unless (hash-ref drawn-rooms (list room-x room-y) #f)
+          ; make sure that we're still on the screen
+          (when (and (<= 0 screen-x wide)
+                     (<= 0 screen-y high))
+            ; get the room we're trying to draw
+            (define room (hash-ref rooms (list player-floor room-x room-y) #f))
+            (when room
+              ; draw the room's tiles
+              (for* ([xi (in-range 9)]
+                     [yi (in-range 9)])
+                (define tile (send room get-tile xi yi))
+                (send canvas draw-tile 
+                      (+ screen-x xi -4 player-in-room-x)
+                      (+ screen-y yi -4 player-in-room-y)
+                      (send tile get-tile) ; TODO: rotated?
                       (send tile get-foreground)
-                      (send tile get-background)))]))
+                      (send tile get-background)))
+              
+              ; --- draw the borders ---
+              
+              ; get the color for walls vs doors
+              (define (wall-color dir i)
+                (if (and (send room has-door? dir)
+                         (<= 4 i 6))
+                    "brown"
+                    "gray"))
+                
+              ; the special outside square only has a north wall
+              (define outside? (equal? (send room get-name) "outside"))
+              
+              ; actually do the drawing
+              (for ([bi (in-range 11)])
+                ; these all change in sync, so only four iterations
+                (for ([dir  '(north south west east)]
+                      [xmin '(   -5    -5   -5    5)]
+                      [ymin '(   -5     5   -5   -5)]
+                      [xd   `(  ,bi   ,bi    0    0)]
+                      [xd   `(    0     0  ,bi  ,bi)])
+                  (when (or (eq? dir 'north) (not outside?))
+                    (send canvas draw-tile
+                          (+ screen-x xmin player-in-room-x xd)
+                          (+ screen-y ymin player-in-room-y yd)
+                          #\space
+                          (wall-color dir bi)
+                          (wall-color dir bi)))))
+
+              ; recur
+              ; note: set drawn-rooms to avoid drawing more than once
+              (hash-set! drawn-rooms (list room-x room-y) #t)
+              (draw-room screen-x (- screen-y 10) room-x (- room-y 1))
+              (draw-room screen-x (+ screen-y 10) room-x (+ room-y 1))
+              (draw-room (- screen-x 10) screen-y (- room-x 1) room-y)
+              (draw-room (+ screen-x 10) screen-y (+ room-x 1) room-y)))))
+      
+      ; start the recursion at the current room
+      (draw-room (quotient wide 2) (quotient high 2) player-room-x player-room-y)
+
      ; draw the player
       (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))
     

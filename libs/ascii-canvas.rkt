@@ -44,7 +44,6 @@
     (define/override (on-char key-event)
       (unless (eq? 'release (send key-event get-key-code))
         (set! active-screen (send active-screen update key-event))
-        (printf "current screen: ~s\n" active-screen)
         (cond
           [(is-a? active-screen screen%)
            (flip)]
