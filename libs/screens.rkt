@@ -8,7 +8,8 @@
 (require
  racket/gui
  racket/draw
- "room.rkt")
+ "room.rkt"
+ "player.rkt")
 
 ; add or subtract one
 (define-syntax-rule (++! var) (set! var (+ var 1)))
@@ -35,12 +36,25 @@
 (define main-menu-screen%
   (class screen%
     (define/override (update key-event)
-      (printf "make the game\n")
       (new game-screen%))
     
     (define/override (draw canvas)
       (send canvas draw-centered-string 10 "The House on the Hill")
       (send canvas draw-centered-string 12 "Press any key to begin"))
+    
+    (super-new)))
+
+; main menu screen, just wait for a key press
+(define loss-screen%
+  (class screen%
+    (define/override (update key-event)
+      (new game-screen%))
+    
+    (define/override (draw canvas)
+      (send canvas clear)
+      (send canvas draw-centered-string 10 "The House on the Hill")
+      (send canvas draw-centered-string 12 "You lose! :(")
+      (send canvas draw-centered-string 14 "Press any key to try again"))
     
     (super-new)))
 
@@ -51,6 +65,7 @@
     (define rooms (make-hash))
     
     ; --- player position ---
+    (define player (make-player))
     (define player-floor 'ground)
     
     ; which room the player is in (start at 0x0)
@@ -72,32 +87,66 @@
     
     ; handle key presses
     (define/override (update key-event)
-      ; update the player position
-      (case (send key-event get-key-code)
-        [(up #\w)    (++! player-in-room-y)]
-        [(down #\s)  (--! player-in-room-y)]
-        [(left #\a)  (++! player-in-room-x)]
-        [(right #\d) (--! player-in-room-x)])
+      ; allow bailing out early
+      (call/cc 
+       (lambda (return)
+         ; pull out the key code
+         (define code (send key-event get-key-code))
+         
+         ; get the new position
+         (define new-player-in-room-y
+           (case code
+             [(up #\w numpad7 numpad8 numpad9) (+ player-in-room-y 1)]
+             [(down #\s numpad1 numpad2 numpad3) (- player-in-room-y 1)]
+             [else player-in-room-y]))
+         (define new-player-in-room-x
+           (case code
+             [(left #\a numpad1 numpad4 numpad7) (+ player-in-room-x 1)]
+             [(right #\d numpad3 numpad6 numpad9) (- player-in-room-x 1)]
+             [else player-in-room-x]))
+         
+         ; if we don't move, don't bother checking the rest
+         (when (and (= player-in-room-x new-player-in-room-x)
+                    (= player-in-room-y new-player-in-room-y))
+           (return this))
+         
+         ; check that it's walkable
+         ; TODO: borders
+         (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
+         (define tile (send room get-tile 
+                            (+ 4 new-player-in-room-x)
+                            (+ 4 new-player-in-room-y)))
+         (unless (send tile walkable?)
+           (printf "not walkable\n")
+           (return this))
+         
+         ; trigger on-walk events
+         (send tile do-walk player tile)
+         
+         ; update the player position
+         (set! player-in-room-x new-player-in-room-x)
+         (set! player-in-room-y new-player-in-room-y)
+         
+         ; potentially change the room
+         (cond
+           [(< player-in-room-x -4)
+            (set! player-in-room-x 5)
+            (++! player-room-x)]
+           [(> player-in-room-x 4)
+            (set! player-in-room-x -5)
+            (--! player-room-x)]
+           [(< player-in-room-y -4)
+            (set! player-in-room-y 5)
+            (++! player-room-y)]
+           [(> player-in-room-y 4)
+            (set! player-in-room-y -5)
+            (--! player-room-y)])
+         
+         ; return this screen again
+         (if (send player dead?)
+             (new loss-screen%)
+             this))))
       
-      ; potentially change the room
-      (cond
-        [(< player-in-room-x -4)
-         (set! player-in-room-x 5)
-         (++! player-room-x)]
-        [(> player-in-room-x 4)
-         (set! player-in-room-x -5)
-         (--! player-room-x)]
-        [(< player-in-room-y -4)
-         (set! player-in-room-y 5)
-         (++! player-room-y)]
-        [(> player-in-room-y 4)
-         (set! player-in-room-y -5)
-         (--! player-room-y)])
-      
-      ; return this screen again
-      ; TODO: game over screen
-      this)
-    
     ; draw the current world
     (define/override (draw canvas)
       (send canvas clear)
@@ -105,8 +154,6 @@
       ; get the canvas size
       (define wide (send canvas get-tiles-wide))
       (define high (send canvas get-tiles-high))
-      
-      ; 
       
       ; function to draw a single room
       ; screen-x/y - screen coordinates of the center of the room
@@ -171,7 +218,7 @@
       ; start the recursion at the current room
       (draw-room (quotient wide 2) (quotient high 2) player-room-x player-room-y)
 
-     ; draw the player
+      ; draw the player
       (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))
     
     (super-new)))

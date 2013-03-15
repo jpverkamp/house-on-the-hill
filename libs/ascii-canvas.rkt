@@ -37,8 +37,7 @@
     (define target-height (* tile-size tiles-high))
     
     ; define the current active screen
-    (define active-screen
-      (new main-menu-screen%))
+    (define active-screen (new main-menu-screen%))
     
     ; process keyboard events  
     (define/override (on-char key-event)

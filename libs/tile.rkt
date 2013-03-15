@@ -50,6 +50,9 @@
     (define/public (get-tile [rotated #f])
       (if rotated rotated-tile default-tile))
     (define/public (walkable?) walkable)
+    (define/public (do-walk player tile)
+      (when on-walk
+        (on-walk player tile)))
     
     ; fix the tiles if they were given as a string
     (when (string? tile)
