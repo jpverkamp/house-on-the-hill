@@ -10,6 +10,10 @@
  racket/draw
  "room.rkt")
 
+; add or subtract one
+(define-syntax-rule (++! var) (set! var (+ var 1)))
+(define-syntax-rule (--! var) (set! var (- var 1)))
+
 ; basic screen
 ; we shouldn't actually use this one
 (define screen%
@@ -68,19 +72,30 @@
     
     ; handle key presses
     (define/override (update key-event)
+      ; update the player position
       (case (send key-event get-key-code)
-        [(up #\w) 
-         (printf "move north\n")
-         (set! player-in-room-y (add1 player-in-room-y))]
-        [(down #\s)
-         (printf "move south\n")
-         (set! player-in-room-y (sub1 player-in-room-y))]
-        [(left #\a)
-         (printf "move west\n")
-         (set! player-in-room-x (add1 player-in-room-x))]
-        [(right #\d)
-         (printf "move east\n")
-         (set! player-in-room-x (sub1 player-in-room-x))])
+        [(up #\w)    (++! player-in-room-y)]
+        [(down #\s)  (--! player-in-room-y)]
+        [(left #\a)  (++! player-in-room-x)]
+        [(right #\d) (--! player-in-room-x)])
+      
+      ; potentially change the room
+      (cond
+        [(< player-in-room-x -4)
+         (set! player-in-room-x 5)
+         (++! player-room-x)]
+        [(> player-in-room-x 4)
+         (set! player-in-room-x -5)
+         (--! player-room-x)]
+        [(< player-in-room-y -4)
+         (set! player-in-room-y 5)
+         (++! player-room-y)]
+        [(> player-in-room-y 4)
+         (set! player-in-room-y -5)
+         (--! player-room-y)])
+      
+      ; return this screen again
+      ; TODO: game over screen
       this)
     
     ; draw the current world
@@ -98,8 +113,6 @@
       ; room-x/y - room coordinates for the room to draw
       (define drawn-rooms (make-hash))
       (define (draw-room screen-x screen-y room-x room-y)
-        (printf "drawing (~a, ~a)\n" room-x room-y)
-        
         ; check if we've already drawn this room
         (unless (hash-ref drawn-rooms (list room-x room-y) #f)
           ; make sure that we're still on the screen
@@ -138,7 +151,7 @@
                       [xmin '(   -5    -5   -5    5)]
                       [ymin '(   -5     5   -5   -5)]
                       [xd   `(  ,bi   ,bi    0    0)]
-                      [xd   `(    0     0  ,bi  ,bi)])
+                      [yd   `(    0     0  ,bi  ,bi)])
                   (when (or (eq? dir 'north) (not outside?))
                     (send canvas draw-tile
                           (+ screen-x xmin player-in-room-x xd)
