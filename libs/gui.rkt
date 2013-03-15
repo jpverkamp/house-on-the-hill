@@ -14,8 +14,7 @@
      title
      tiles-wide
      tiles-high
-     [tile-size 12]
-     [key-listener #f])
+     [tile-size 12])
     
     ; get the screen metrics
     (define target-width (* tile-size tiles-wide))

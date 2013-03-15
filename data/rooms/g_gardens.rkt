@@ -1,5 +1,5 @@
 (define-room 
-  [name "ballroom"]
+  [name "gardens"]
   [floors '(ground)]
   [doors '(north south)]
   [floorplan

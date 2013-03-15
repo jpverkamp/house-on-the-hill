@@ -41,13 +41,16 @@
     
     ; process keyboard events  
     (define/override (on-char key-event)
-      (unless (eq? 'release (send key-event get-key-code))
-        (set! active-screen (send active-screen update key-event))
-        (cond
-          [(is-a? active-screen screen%)
-           (flip)]
-          [else
-           (exit)])))
+      (case (send key-event get-key-code)
+        [(escape) (exit)]
+        [(release menu) (void)]
+        [else
+         (set! active-screen (send active-screen update key-event))
+         (cond
+           [(is-a? active-screen screen%)
+            (flip)]
+           [else
+            (exit)])]))
   
     ; repaint the canvas
     (define/private (my-paint-callback self dc)

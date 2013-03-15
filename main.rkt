@@ -22,20 +22,10 @@
        (printf "loading ~a\n" path)
        (load path)])))
 
-; function to take a single step in the simulation (on key presses)
-(define (step key-event)
-  (define code (send key-event get-key-code))
-  (unless (or (eq? code 'release)
-              (eq? code 'menu))
-    (send gui clear 0 12 40 1 "black")
-    (send gui draw-centered-string 12 (format " you pressed ~a " code))
-    (send gui flip)))
-
 ; create the main gui
 (define gui 
   (make-gui
    [title "The House on the Hill"]
    [tiles-wide 60]
    [tiles-high 36]
-   [tile-size 14]
-   [key-listener step]))
+   [tile-size 14]))
