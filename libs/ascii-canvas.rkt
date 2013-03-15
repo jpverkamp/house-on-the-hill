@@ -113,6 +113,7 @@
                      (/ (string-length str) 2)))))
       (draw-string x y str fg bg))
     
+    ; build the super class: canvas%
     (super-new 
      [parent parent]
      [paint-callback (lambda (c dc) (my-paint-callback c dc))]

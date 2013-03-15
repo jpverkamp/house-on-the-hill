@@ -41,6 +41,9 @@
     ; stupid title bar...
     (send frame show #t)
     
+    ; request focus for the canvas
+    (send canvas focus)
+    
     ; always need to call this
     (send canvas clear)
     (send canvas flip)
