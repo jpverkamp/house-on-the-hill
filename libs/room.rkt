@@ -13,6 +13,14 @@
 (for ([key (in-list '(all basement ground upstairs))])
   (hash-set! *global-rooms* key (make-hasheq)))
 
+; a tile for errors
+(define *error-tile*
+  (define-tile
+    [tile "§"]
+    [name "ERROR"]
+    [description "Don't panic!"]
+    [foreground "pink"]))
+
 ; store information about rooms
 ; 
 ; required fields:
@@ -58,8 +66,8 @@
         [(get-global-tile tile-char)
          => (lambda (tile) tile)]
         [else
-         (error 'get-tile "tile '~a' not defined at (~a, ~a)" tile-char x y)]))
-
+         *error-tile*]))
+         
     ; flatten the floorplan string if given as a list of strings
     (when (list? floorplan)
       (set! floorplan (apply string-append floorplan)))
@@ -70,8 +78,6 @@
                    (map (lambda (tile) 
                           (cons (send tile get-tile-key) tile)) 
                         tiles))))
-    
-    (printf "tiles has keys: ~s\n" (hash-keys tiles))
     
     ; this has to be here
     (super-new)))
@@ -91,7 +97,31 @@
   (hash-ref (hash-ref *global-rooms* 'all) (if (string? name) (symbol->string name) name)))
 
 ; get a random room from the given floor (or 'all to choose from all rooms)
-(define (random-room [floor 'all])
+; if has-doors is non-#f, rooms must have those doors
+; if non-doors is non-#f, rooms must not have those doors
+(define (random-room [floor 'all] [has-doors #f] [non-doors #f])
   (define room-keys (hash-keys (hash-ref *global-rooms* floor)))
-  (hash-ref (hash-ref *global-rooms* floor) (list-ref room-keys (random (length room-keys)))))
+  
+  ; keep going until we find a room that fits
+  (let loop ([tries 0])
+    ; TODO: debug messages
+    (when (>= tries 10)
+      (printf "failed to generate a room after ~a tries...\n" tries))
+    (when (>= tries 20)
+      (exit))
+    
+    ; choose a room at random
+    (define room 
+      (hash-ref (hash-ref *global-rooms* floor) 
+                (list-ref room-keys (random (length room-keys)))
+                #f))
+    
+    ; if we find a room, check the doors (both required and required not)
+    (if (and room
+             (or (not has-doors)
+                 (andmap (lambda (door) (send room has-door? door)) has-doors))
+             (or (not non-doors)
+                 (andmap (lambda (door) (not (send room has-door? door))) non-doors)))
+        room
+        (loop (+ tries 1)))))
 

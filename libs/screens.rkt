@@ -162,14 +162,35 @@
          
          ; generate a new room if necessary
          (unless (hash-ref rooms (list player-floor player-room-x player-room-y) #f)
-           ; TODO: generate this
-           (define new-room (get-room 'catacombs))
-           
+           ; get the neighboring rooms
+           (define neighbors
+             (list (hash-ref rooms (list player-floor player-room-x (- player-room-y 1)) #f)
+                   (hash-ref rooms (list player-floor player-room-x (+ player-room-y 1)) #f)
+                   (hash-ref rooms (list player-floor (- player-room-x 1) player-room-y) #f)
+                   (hash-ref rooms (list player-floor (+ player-room-x 1) player-room-y) #f)))
+
+           ; get a neighbor
+           ; TODO: if this fails, it will kill the game... 
+           ;       (dont' let it fail)
+           (define new-room 
+             (random-room 
+              ; the floor we're looking on
+              player-floor
+              ; doors that we have to have
+              (for/list ([neighbor (in-list neighbors)]
+                         [dir-to (in-list '(north south west east))]
+                         [dir-back (in-list '(south north east west))]
+                         #:when (and neighbor (send neighbor has-door? dir-back)))
+                dir-to)
+              ; walls that cannot have doors
+              (for/list ([neighbor (in-list neighbors)]
+                         [dir-to (in-list '(north south west east))]
+                         [dir-back (in-list '(south north east west))]
+                         #:when (and neighbor (not (send neighbor has-door? dir-back))))
+                dir-to)))
            
            ; add the new room to the map
-           (hash-set! rooms 
-                      (list player-floor player-room-x player-room-y)
-                      new-room))
+           (hash-set! rooms (list player-floor player-room-x player-room-y) new-room))
          
          ; return this screen again
          (if (send player dead?)
