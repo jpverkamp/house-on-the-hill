@@ -7,6 +7,7 @@
  "libs/room.rkt"
  "libs/tile.rkt"
  "libs/event.rkt"
+ "libs/item.rkt"
  "libs/dice.rkt")
 
 ; create the sandbox namespace

@@ -202,7 +202,7 @@
                                     (send new-room get-name)
                                     (send event get-name)
                                     (send event get-text)))
-           ((send event get-effect) player))
+           (send event do-effect player))
          
          ; fire any on room change events
          (when changed-room
@@ -333,10 +333,16 @@
       
       ; --- draw the player's current statistics ---
       (send canvas clear (- last-col 15) 0 15 (send canvas get-tiles-high) "black")
+      (send canvas draw-string (- last-col 15) 1 "-- Player --")
       (for ([row (in-range 4)]
             [stat (in-list '(might vigor intellect sanity))])
-        (send canvas draw-string (- last-col 15) (+ (* 2 row) 1) 
+        (send canvas draw-string (- last-col 15) (+ (* 2 row) 3) 
               (format "~a: ~a" stat (send player get-stat stat))))
+      
+      (send canvas draw-string (- last-col 15) 11 "-- Items --")
+      (for ([row (in-naturals)]
+            [name (in-list (send player get-item-names))])
+        (send canvas draw-string (- last-col 15) (+ (* 2 row) 13) name))
       
       ; draw the player
       (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))

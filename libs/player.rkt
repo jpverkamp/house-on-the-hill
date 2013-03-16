@@ -23,6 +23,20 @@
     (define/public (stat+= which diff) (hash-set! stats which (+ (hash-ref stats which 0) diff))) 
     (define/public (stat-= which diff) (hash-set! stats which (- (hash-ref stats which 0) diff)))
     
+    ; any items that the player is carrying
+    (define items '())
+    (define/public (gain-item item)
+      (send item do-gain this)
+      (set! items (cons item items)))
+    (define/public (lose-item [item #f])
+      (when (not item)
+        (set! item (car (shuffle items))))
+      (send item do-loss this)
+      (set! items (remove item items)))
+    (define/public (get-item-names)
+      (for/list ([item (in-list items)])
+        (send item get-name)))
+    
     ; ask the player for input
     (define/public (ask msg)
       (eq? 'yes
