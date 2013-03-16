@@ -13,6 +13,10 @@
      "........."
      "........."
      ".........")]
+  [on-enter
+   (lambda (player)
+     (send player say "You feel a shiver run up your spine, as if someone had just walked over your grave.")
+     (send player set-stat! 'sanity (- (send player get-stat 'sanity) 1)))]
   [tiles
    (list
     (define-tile

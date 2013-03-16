@@ -146,6 +146,7 @@
          (set! player-in-room-y new-player-in-room-y)
          
          ; potentially change the room
+         (define changed-room #t)
          (cond
            [(< player-in-room-x -4)
             (set! player-in-room-x 5)
@@ -158,7 +159,9 @@
             (++! player-room-y)]
            [(> player-in-room-y 4)
             (set! player-in-room-y -5)
-            (--! player-room-y)])
+            (--! player-room-y)]
+           [else 
+            (set! changed-room #f)])
          
          ; generate a new room if necessary
          (unless (hash-ref rooms (list player-floor player-room-x player-room-y) #f)
@@ -191,6 +194,23 @@
            
            ; add the new room to the map
            (hash-set! rooms (list player-floor player-room-x player-room-y) new-room))
+         
+         ; fire any on room change events
+         (when changed-room
+           (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
+           (send room do-enter player))
+         
+         ; check for lack of stats
+         (call/cc
+          (lambda (break)
+            (for ([stat (in-list '(might vigor intellect sanity))]
+                  [msg (in-list '("You feel weak. So weak.\nYou can barely lift your legs.\nYour eyes close. You die."
+                                  "You feel so very tired.\nPerhaps you can lie down for just... one..."
+                                  "Your mind feels sluggish.\nPerhaps coming here wasn't such a good idea after all."
+                                  "You can feel your mind slipping.\nThere is just too much wrong with this house.\nToo much wrong."))])
+              (when (<= (send player get-stat stat) 0)
+                (send player die msg)
+                (break #t)))))
          
          ; return this screen again
          (if (send player dead?)
@@ -268,7 +288,12 @@
       ; start the recursion at the current room
       (draw-room (quotient wide 2) (quotient high 2) player-room-x player-room-y)
 
-      ; add the bottom of the screen, print out the current room and description
+      ; === graphical overlay ===
+      (define last-row (- (send canvas get-tiles-high) 1))
+      (define last-col (- (send canvas get-tiles-wide) 1))
+      
+      ; --- at the bottom of the screen,
+      ; print out the current room and description ---
       (define (fix-caps str)
         (cond
           [(= 0 (string-length str)) str]
@@ -277,7 +302,6 @@
            (string-set! nstr 0 (char-upcase (string-ref nstr 0)))
            nstr]))
       
-      (define last-row (- (send canvas get-tiles-high) 1))
       (send canvas clear 0 (- last-row 2) (send canvas get-tiles-wide) 3 "black")
       
       ; draw a description of the current room
@@ -297,6 +321,13 @@
               (string-append (fix-caps (send tile get-name))
                              ": "
                              (fix-caps (send tile get-description)))))
+      
+      ; --- draw the player's current statistics ---
+      (send canvas clear (- last-col 15) 0 15 (send canvas get-tiles-high) "black")
+      (for ([row (in-range 4)]
+            [stat (in-list '(might vigor intellect sanity))])
+        (send canvas draw-string (- last-col 15) (+ (* 2 row) 1) 
+              (format "~a: ~a" stat (send player get-stat stat))))
       
       ; draw the player
       (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))

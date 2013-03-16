@@ -44,7 +44,8 @@
      [description ""]
      [floors '(basement ground upstairs)]
      [doors '(north south east west)]
-     [tiles '()])
+     [tiles '()]
+     [on-enter #f])
     
     ; accessors for public fields
     (define/public (get-name) name)
@@ -78,6 +79,11 @@
                    (map (lambda (tile) 
                           (cons (send tile get-tile-key) tile)) 
                         tiles))))
+    
+    ; event for when the player enters a room
+    (define/public (do-enter player)
+      (when on-enter
+        (on-enter player)))
     
     ; this has to be here
     (super-new)))

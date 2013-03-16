@@ -13,6 +13,14 @@
     (define dead #f)
     (define/public (dead?) dead)
     
+    ; the player's four statistics
+    (define stats (make-hasheq (list (cons 'might (+ 2 (random 4)))
+                                     (cons 'vigor (+ 2 (random 4)))
+                                     (cons 'intellect (+ 2 (random 4)))
+                                     (cons 'sanity (+ 2 (random 4))))))
+    (define/public (get-stat which) (hash-ref stats which 0))
+    (define/public (set-stat! which value) (hash-set! stats which value))
+    
     ; ask the player for input
     (define/public (ask msg)
       (eq? 'yes
