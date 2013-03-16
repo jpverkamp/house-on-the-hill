@@ -1,5 +1,6 @@
 (define-room 
   [name "ballroom"]
+  [description "a once grand ballroom, now fallen into disuse"]
   [floors '(ground)]
   [doors '(north south west east)]
   [floorplan

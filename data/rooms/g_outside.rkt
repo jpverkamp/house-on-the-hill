@@ -5,6 +5,7 @@
 
 (define-room
   [name "outside"]
+  [description "the House on the Hill looms before you"]
   [floors '()]
   [doors '(north)]
   [floorplan

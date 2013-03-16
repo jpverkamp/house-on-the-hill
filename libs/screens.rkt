@@ -268,6 +268,36 @@
       ; start the recursion at the current room
       (draw-room (quotient wide 2) (quotient high 2) player-room-x player-room-y)
 
+      ; add the bottom of the screen, print out the current room and description
+      (define (fix-caps str)
+        (cond
+          [(= 0 (string-length str)) str]
+          [else
+           (define nstr (string-copy str))
+           (string-set! nstr 0 (char-upcase (string-ref nstr 0)))
+           nstr]))
+      
+      (define last-row (- (send canvas get-tiles-high) 1))
+      (send canvas clear 0 (- last-row 2) (send canvas get-tiles-wide) 3 "black")
+      
+      ; draw a description of the current room
+      (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
+      (send canvas draw-string 1 (- last-row 2)
+            (string-append (fix-caps (send room get-name))
+                           ": "
+                           (fix-caps (send room get-description))))
+      
+      ; draw a description of the current tile
+      (when (and (<= -4 player-in-room-x 4)
+                 (<= -4 player-in-room-y 4))
+        (define tile (send room get-tile 
+                           (+ 4 player-in-room-x)
+                           (+ 4 player-in-room-y)))
+        (send canvas draw-string 1 (- last-row 1)
+              (string-append (fix-caps (send tile get-name))
+                             ": "
+                             (fix-caps (send tile get-description)))))
+      
       ; draw the player
       (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))
     

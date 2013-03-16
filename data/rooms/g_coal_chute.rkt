@@ -3,6 +3,7 @@
 
 (define-room 
   [name "coal chute"]
+  [description "a chute into the darkness, where could it lead?"]
   [floors '(ground)]
   [doors '(north)]
   [floorplan

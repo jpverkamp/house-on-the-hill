@@ -1,5 +1,6 @@
 (define-room 
   [name "dining room"]
+  [description "a beautiful oak table, still set with dinner for six"]
   [floors '(ground)]
   [doors '(north east)]
   [floorplan
@@ -32,7 +33,7 @@
       [background "brown"]
       [description "a round table, set for a meal long ago"]
       [walkable #f])
-    #;(define-tile
+    (define-tile
       [tile "|"]
       [name "table"]
       [background "brown"]

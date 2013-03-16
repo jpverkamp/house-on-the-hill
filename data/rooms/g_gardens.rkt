@@ -1,5 +1,6 @@
 (define-room 
   [name "gardens"]
+  [description "a path through what once must have been a fine garden, now gone to seed"]
   [floors '(ground)]
   [doors '(north south)]
   [floorplan

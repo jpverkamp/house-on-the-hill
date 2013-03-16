@@ -1,5 +1,6 @@
 (define-room
   [name "chasm"]
+  [description "a seemingly endless drop into darkness with only a rickety wooden bridge for support"]
   [floors '(basement)]
   [doors '(west east)]
   [floorplan

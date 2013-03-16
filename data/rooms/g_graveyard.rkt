@@ -1,5 +1,6 @@
 (define-room 
   [name "graveyard"]
+  [description "a tucked away portion of grass, crumbling tombstones lying in shadows"]
   [floors '(ground)]
   [doors '(south)]
   [floorplan
