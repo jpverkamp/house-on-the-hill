@@ -5,7 +5,9 @@
  racket/runtime-path
  "libs/gui.rkt"
  "libs/room.rkt"
- "libs/tile.rkt")
+ "libs/tile.rkt"
+ "libs/event.rkt"
+ "libs/dice.rkt")
 
 ; create the sandbox namespace
 (define-namespace-anchor anchor)

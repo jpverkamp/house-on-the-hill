@@ -20,6 +20,8 @@
                                      (cons 'sanity (+ 2 (random 4))))))
     (define/public (get-stat which) (hash-ref stats which 0))
     (define/public (set-stat! which value) (hash-set! stats which value))
+    (define/public (stat+= which diff) (hash-set! stats which (+ (hash-ref stats which 0) diff))) 
+    (define/public (stat-= which diff) (hash-set! stats which (- (hash-ref stats which 0) diff)))
     
     ; ask the player for input
     (define/public (ask msg)

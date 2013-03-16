@@ -45,6 +45,7 @@
      [floors '(basement ground upstairs)]
      [doors '(north south east west)]
      [tiles '()]
+     [has-event #t]
      [on-enter #f])
     
     ; accessors for public fields

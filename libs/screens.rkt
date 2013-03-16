@@ -9,7 +9,8 @@
  racket/gui
  racket/draw
  "room.rkt"
- "player.rkt")
+ "player.rkt"
+ "event.rkt")
 
 ; add or subtract one
 (define-syntax-rule (++! var) (set! var (+ var 1)))
@@ -193,7 +194,15 @@
                 dir-to)))
            
            ; add the new room to the map
-           (hash-set! rooms (list player-floor player-room-x player-room-y) new-room))
+           (hash-set! rooms (list player-floor player-room-x player-room-y) new-room)
+           
+           ; trigger an event for the new room
+           (define event (random-event))
+           (send player say (format "On entering the ~a: ~a\n\n~a"
+                                    (send new-room get-name)
+                                    (send event get-name)
+                                    (send event get-text)))
+           ((send event get-effect) player))
          
          ; fire any on room change events
          (when changed-room
