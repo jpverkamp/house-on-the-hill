@@ -5,7 +5,8 @@
 (require  
  racket/gui
  racket/draw
- "ascii-canvas.rkt")
+ "ascii-canvas/ascii-canvas.rkt"
+ "screens.rkt")
 
 ; a gui
 (define gui%
@@ -13,28 +14,44 @@
     (init-field
      title
      tiles-wide
-     tiles-high
-     [tile-size 12])
+     tiles-high)
     
-    ; get the screen metrics
-    (define target-width (* tile-size tiles-wide))
-    (define target-height (* tile-size tiles-high))
+    ; define the current active screen
+    (define active-screen (new main-menu-screen%))
     
     ; the window
     (define frame
       (new frame%
            [label title]
-           [width target-width]
-           [height target-height]
            [style '(no-resize-border)]))
     
     ; the canvas to draw on
     (define canvas 
-      (new ascii-canvas%
-           [parent frame]
-           [tiles-wide tiles-wide]
-           [tiles-high tiles-high]
-           [tile-size tile-size]))
+      (new (class ascii-canvas%
+             (inherit-field
+              width-in-characters
+              height-in-characters)
+             
+             ; process keyboard events  
+             (define/override (on-char key-event)
+               (case (send key-event get-key-code)
+                 [(escape) (exit)]
+                 [(release menu) (void)]
+                 [else
+                  (set! active-screen (send active-screen update key-event))
+                  (cond
+                    [(is-a? active-screen screen%)
+                     (send active-screen draw this)
+                     (send frame refresh)]
+                    [else
+                     (exit)])]))
+             
+             (super-new 
+              [parent frame]
+              [width-in-characters tiles-wide]
+              [height-in-characters tiles-high])
+             
+             )))
     
     ; resize the container to actually fit the interface
     ; stupid title bar...
@@ -45,7 +62,11 @@
     
     ; always need to call this
     (send canvas clear)
-    (send canvas flip)
+    (send frame refresh)
+    
+    (send active-screen draw canvas)
+    (send frame refresh)
+    
     (super-new)))
   
 ; create a new gui

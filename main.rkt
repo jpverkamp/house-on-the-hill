@@ -30,5 +30,4 @@
   (make-gui
    [title "The House on the Hill"]
    [tiles-wide 80]
-   [tiles-high 48]
-   [tile-size 10]))
+   [tiles-high 48]))

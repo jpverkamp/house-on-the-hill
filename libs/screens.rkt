@@ -40,8 +40,8 @@
       (new game-screen%))
     
     (define/override (draw canvas)
-      (send canvas draw-centered-string 10 "The House on the Hill")
-      (send canvas draw-centered-string 12 "Press any key to begin"))
+      (send canvas write-center "The House on the Hill" 10)
+      (send canvas write-center "Press any key to begin" 12))
     
     (super-new)))
 
@@ -53,9 +53,9 @@
     
     (define/override (draw canvas)
       (send canvas clear)
-      (send canvas draw-centered-string 10 "The House on the Hill")
-      (send canvas draw-centered-string 12 "You lose! :(")
-      (send canvas draw-centered-string 14 "Press any key to try again"))
+      (send canvas write-center "The House on the Hill" 10)
+      (send canvas write-center "You lose! :(" 12)
+      (send canvas write-center "Press any key to try again" 14))
     
     (super-new)))
 
@@ -231,8 +231,8 @@
       (send canvas clear)
       
       ; get the canvas size
-      (define wide (send canvas get-tiles-wide))
-      (define high (send canvas get-tiles-high))
+      (define wide (send canvas get-width-in-characters))
+      (define high (send canvas get-height-in-characters))
       
       ; function to draw a single room
       ; screen-x/y - screen coordinates of the center of the room
@@ -251,10 +251,10 @@
               (for* ([xi (in-range 9)]
                      [yi (in-range 9)])
                 (define tile (send room get-tile xi yi))
-                (send canvas draw-tile 
+                (send canvas write 
+                      (send tile get-tile) ; TODO: rotated?
                       (+ screen-x xi -4 player-in-room-x)
                       (+ screen-y yi -4 player-in-room-y)
-                      (send tile get-tile) ; TODO: rotated?
                       (send tile get-foreground)
                       (send tile get-background)))
               
@@ -279,10 +279,10 @@
                       [xd   `(  ,bi   ,bi    0    0)]
                       [yd   `(    0     0  ,bi  ,bi)])
                   (when (or (eq? dir 'north) (not outside?))
-                    (send canvas draw-tile
+                    (send canvas write
+                          #\space
                           (+ screen-x xmin player-in-room-x xd)
                           (+ screen-y ymin player-in-room-y yd)
-                          #\space
                           (wall-color dir bi)
                           (wall-color dir bi)))))
 
@@ -298,8 +298,8 @@
       (draw-room (quotient wide 2) (quotient high 2) player-room-x player-room-y)
 
       ; === graphical overlay ===
-      (define last-row (- (send canvas get-tiles-high) 1))
-      (define last-col (- (send canvas get-tiles-wide) 1))
+      (define last-row (- (send canvas get-height-in-characters) 1))
+      (define last-col (- (send canvas get-width-in-characters) 1))
       
       ; --- at the bottom of the screen,
       ; print out the current room and description ---
@@ -311,14 +311,15 @@
            (string-set! nstr 0 (char-upcase (string-ref nstr 0)))
            nstr]))
       
-      (send canvas clear 0 (- last-row 2) (send canvas get-tiles-wide) 3 "black")
+      (send canvas clear #\space 0 (- last-row 2) (send canvas get-width-in-characters) 3 "white" "black")
       
       ; draw a description of the current room
       (define room (hash-ref rooms (list player-floor player-room-x player-room-y) #f))
-      (send canvas draw-string 1 (- last-row 2)
+      (send canvas write-string
             (string-append (fix-caps (send room get-name))
                            ": "
-                           (fix-caps (send room get-description))))
+                           (fix-caps (send room get-description)))
+             1 (- last-row 2))
       
       ; draw a description of the current tile
       (when (and (<= -4 player-in-room-x 4)
@@ -326,25 +327,27 @@
         (define tile (send room get-tile 
                            (+ 4 player-in-room-x)
                            (+ 4 player-in-room-y)))
-        (send canvas draw-string 1 (- last-row 1)
+        (send canvas write-string
               (string-append (fix-caps (send tile get-name))
                              ": "
-                             (fix-caps (send tile get-description)))))
+                             (fix-caps (send tile get-description)))
+              1 (- last-row 1)))
       
       ; --- draw the player's current statistics ---
-      (send canvas clear (- last-col 15) 0 15 (send canvas get-tiles-high) "black")
-      (send canvas draw-string (- last-col 15) 1 "-- Player --")
+      (send canvas clear #\space (- last-col 15) 0 15 (send canvas get-height-in-characters) "white" "black")
+      (send canvas write-string "-- Player --" (- last-col 15) 1)
       (for ([row (in-range 4)]
             [stat (in-list '(might vigor intellect sanity))])
-        (send canvas draw-string (- last-col 15) (+ (* 2 row) 3) 
-              (format "~a: ~a" stat (send player get-stat stat))))
+        (send canvas write-string 
+              (format "~a: ~a" stat (send player get-stat stat))
+              (- last-col 15) (+ (* 2 row) 3)))
       
-      (send canvas draw-string (- last-col 15) 11 "-- Items --")
+      (send canvas write-string "-- Items --" (- last-col 15) 11)
       (for ([row (in-naturals)]
             [name (in-list (send player get-item-names))])
-        (send canvas draw-string (- last-col 15) (+ (* 2 row) 13) name))
+        (send canvas write-string name (- last-col 15) (+ (* 2 row) 13)))
       
       ; draw the player
-      (send canvas draw-tile (quotient wide 2) (quotient high 2) #\@))
+      (send canvas write #\@ (quotient wide 2) (quotient high 2)))
     
     (super-new)))
